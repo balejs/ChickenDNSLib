@@ -1,0 +1,34 @@
+{
+  "name": "ChickenDNSLib",
+  "version": "1.0.0",
+  "description": "ChickenWorld DNS handling",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/balejs/ChickenWorld.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Marco Ballesio",
+      "email": "marco.ballesio@gmail.com"
+    }
+  ],
+  "license": "Proprietary",
+  "dependencies": [
+    {
+      "name": "ChickenFundamentalsLib",
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenFundamentalsLib#1.0.0"
+    },
+    {
+      "name": "ChickenLoopScheduler",
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenLoopSchedulerLib#1.0.0"
+    },
+    {
+      "name": "ChickenNetworkingLib",
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenNetworkingLib#1.0.0"
+    }
+  ],
+  "frameworks": "espidf",
+  "platforms": "*"
+}
