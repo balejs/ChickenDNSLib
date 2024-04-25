@@ -1,6 +1,6 @@
 {
   "name": "ChickenDNSLib",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ChickenWorld DNS handling",
   "repository":
   {
@@ -18,15 +18,15 @@
   "dependencies": [
     {
       "name": "ChickenFundamentalsLib",
-      "version": "git+ssh://git@balejs.github.com/balejs/ChickenFundamentalsLib#1.0.0"
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenFundamentalsLib#1.1.0"
     },
     {
       "name": "ChickenLoopScheduler",
-      "version": "git+ssh://git@balejs.github.com/balejs/ChickenLoopSchedulerLib#1.0.0"
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenLoopSchedulerLib#1.1.0"
     },
     {
       "name": "ChickenNetworkingLib",
-      "version": "git+ssh://git@balejs.github.com/balejs/ChickenNetworkingLib#1.0.0"
+      "version": "git+ssh://git@balejs.github.com/balejs/ChickenNetworkingLib#1.1.0"
     }
   ],
   "frameworks": "espidf",

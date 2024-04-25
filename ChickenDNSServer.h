@@ -32,6 +32,8 @@ namespace Chicken {
                 return ((networkOrder & 0xff) << 8) | ((networkOrder & 0xff00) >> 8);
             }
     };
+
+    DefineHelpers(DNSServer);
 }
 
 #endif //__CHICKEN_DNS_SERVER_H__
