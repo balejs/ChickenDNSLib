@@ -5,27 +5,27 @@
 #include <memory>
 #include <lwip/ip4_addr.h>
 #include <ChickenSocket.h>
+#include <LoopScheduler.h>
 #include <Interfaces.h>
 
 
-class LoopScheduler;
-
 namespace Chicken {
     class DNSMessage;
+    DefineHelpers(DNSMessage);
 
     class DNSServer: public Weakling<DNSServer>
     {
         public:
-            DNSServer(ChickenStr domainName, std::shared_ptr<LoopScheduler> loopScheduler);
+            DNSServer(ChickenStr domainName, SLoopScheduler loopScheduler);
 
         private:
-            ChickenStr domainName;
-            bool running;
+            ChickenStr _domainName;
+            bool _running;
 
-            std::shared_ptr<LoopScheduler> loopScheduler;
-            std::shared_ptr<Socket> serverSocket;
+            SLoopScheduler _loopScheduler;
+            SSocket _serverSocket;
 
-            esp_err_t handleMessage(std::shared_ptr<DNSMessage> message);
+            esp_err_t handleMessage(SDNSMessage message);
 
             uint16_t networkToHostOrder(uint16_t networkOrder)
             {

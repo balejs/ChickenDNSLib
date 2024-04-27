@@ -281,19 +281,19 @@ namespace Chicken
   };
 }
 
-Chicken::DNSServer::DNSServer(ChickenStr domainName, std::shared_ptr<LoopScheduler> loopScheduler)
+Chicken::DNSServer::DNSServer(ChickenStr domainName, SLoopScheduler loopScheduler)
 {
-  this->domainName = domainName;
-  this->loopScheduler = loopScheduler;
+  _domainName = domainName;
+  _loopScheduler = loopScheduler;
 
-  serverSocket = Socket::make(loopScheduler);
-  std::shared_ptr<DNSMessage> message = std::make_shared<DNSMessage>();
+  _serverSocket = Socket::make(loopScheduler);
+  SDNSMessage message = MakeDNSMessage();
 
-  auto weakPtr = this->weakPtr;
-  serverSocket->receive([weakPtr](esp_err_t err, std::shared_ptr<Buf> message) -> esp_err_t
+  auto weakPtr = _weakPtr;
+  _serverSocket->receive([weakPtr](esp_err_t err, SBuf message) -> esp_err_t
   {
     checkout("Error getting DNS message from socket");
-    err = lockOrDie(weakPtr, err, [message](esp_err_t err, std::shared_ptr<DNSServer> sharedPtr) -> esp_err_t
+    err = lockOrDie(weakPtr, err, [message](esp_err_t err, SDNSServer sharedPtr) -> esp_err_t
     {
       return sharedPtr->handleMessage(std::static_pointer_cast<DNSMessage>(message));
     });
@@ -302,12 +302,12 @@ Chicken::DNSServer::DNSServer(ChickenStr domainName, std::shared_ptr<LoopSchedul
     return err;
   });
 
-  running = true;
+  _running = true;
 }
 
-esp_err_t Chicken::DNSServer::handleMessage(std::shared_ptr<DNSMessage> message)
+esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
 {
-  std::shared_ptr<DNSMessage> reply = std::make_shared<DNSMessage>(message.get());
+  SDNSMessage reply = MakeDNSMessage(message.get());
   reply->setBit(DNS_HEADER_QR, 1);
 
   // 4.1.1. Header section format
@@ -359,7 +359,7 @@ esp_err_t Chicken::DNSServer::handleMessage(std::shared_ptr<DNSMessage> message)
     case DNS_Q_TYPE_URI:
     {
       // rdlength is 4 (uri header) + domain name length + 2 (the double quotes)
-      err = reply->appendResourceRecord(qName, DNS_Q_TYPE_URI, DNS_CLASS_URI, 4 + domainName->getLength() + 2);
+      err = reply->appendResourceRecord(qName, DNS_Q_TYPE_URI, DNS_CLASS_URI, 4 + _domainName->getLength() + 2);
 
       // RFC7553 4.5.  URI RDATA Wire Format
       err = reply->setU16(10); // Priority (value taken from the example)
@@ -367,7 +367,7 @@ esp_err_t Chicken::DNSServer::handleMessage(std::shared_ptr<DNSMessage> message)
 
       // Target, as specified in RFC7553 section 4.4
       err = reply->setU8('"');
-      err = reply->appendString(domainName);
+      err = reply->appendString(_domainName);
       err = reply->setU8('"');
     }
     break;
@@ -376,7 +376,7 @@ esp_err_t Chicken::DNSServer::handleMessage(std::shared_ptr<DNSMessage> message)
     }
   }
 
-  err = serverSocket->send(reply, [](esp_err_t err) -> esp_err_t
+  err = _serverSocket->send(reply, [](esp_err_t err) -> esp_err_t
   {
     logln("DNS response error code: %s", esp_err_to_name(err));
     return err;
