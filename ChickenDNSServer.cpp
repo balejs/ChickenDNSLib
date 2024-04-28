@@ -4,7 +4,7 @@
 #if DNS_SERVER_LOG_LEVEL > 0
 #define TAG "DNSServer"
 #endif
-#include <DebugFuncs.h>
+#include <Utilities.h>
 
 extern "C"
 {
@@ -111,7 +111,7 @@ namespace Chicken
       esp_err_t err = appendLabel(qName); // NAME
       checkout("Unable to set label in reply");
 
-      logln("Resource Record before modifying bytes:");
+      _logi("Resource Record before modifying bytes:");
       logDump();
 
       // Append the remaining Resource Record values
@@ -142,19 +142,19 @@ namespace Chicken
 
       if (lengthBytes > CHICKEN_SOCKET_MAX_MSG_LEN || lengthBytes < HEADER_LEN)
       {
-        logln("Message has incorrect length (%d)", lengthBytes);
+        _logi("Message has incorrect length (%d)", lengthBytes);
         return false;
       }
 
       if (getU16(DNS_HEADER_ANCOUNT) || getU16(DNS_HEADER_NSCOUNT) || getU16(DNS_HEADER_ARCOUNT))
       {
-        logln("Can't handle reply messages");
+        _logi("Can't handle reply messages");
         return false;
       }
 
       if (getBit(DNS_HEADER_TC))
       {
-        logln("Can't handle truncated messages");
+        _logi("Can't handle truncated messages");
         return false;
       }
 
@@ -180,13 +180,13 @@ namespace Chicken
       //- a sequence of labels ending in a zero octet
       //- a pointer
       //- a sequence of labels ending with a pointer
-      logln("initial pos: %u type: %u", posBytes, labelType);
+      _logi("initial pos: %u type: %u", posBytes, labelType);
 
       while (posBytes < getLength() && labelType != LABEL_TYPE_POINTER && d()[posBytes] != 0)
       {
         labelType = d()[posBytes] & LABEL_TYPE_MASK;
 
-        logln("pos: %u type: %u", posBytes, labelType);
+        _logi("pos: %u type: %u", posBytes, labelType);
 
         if (labelType == LABEL_TYPE_POINTER)
         {
@@ -207,17 +207,17 @@ namespace Chicken
         }
 
         uint8_t labelLength = d()[posBytes++]; // restricted to 63 octects or less
-        logln("pos: %u length: %u", posBytes - 1, labelLength);
+        _logi("pos: %u length: %u", posBytes - 1, labelLength);
         *endpointBitsInOut += (labelLength + 1) * 8; // bits in the label + length byte
 
         // 2.3.1. Preferred name syntax
         if (addSeparator)
         {
-          logln("separator");
+          _logi("separator");
           labelOut->append(".");
         }
 
-        logln("appending %c from pos %u", *((char *)message + posBytes), posBytes);
+        _logi("appending %c from pos %u", *((char *)message + posBytes), posBytes);
         labelOut->append((char *)d() + posBytes, labelLength);
         addSeparator = true;
         posBytes += labelLength;
@@ -330,7 +330,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
     qClass = message->getU16(posBits);
     posBits += 16;
 
-    logln("Question: type 0x%X class 0x%X name: %s\n", qType, qClass, qName->c() == NULL ? "(null)" : qName->c());
+    _logi("Question: type 0x%X class 0x%X name: %s\n", qType, qClass, qName->c() == NULL ? "(null)" : qName->c());
 
     switch (qType)
     {
@@ -372,13 +372,13 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
     }
     break;
     default:
-      logln("Unhandled query type: %d", qType);
+      _logi("Unhandled query type: %d", qType);
     }
   }
 
   err = _serverSocket->send(reply, [](esp_err_t err) -> esp_err_t
   {
-    logln("DNS response error code: %s", esp_err_to_name(err));
+    _logi("DNS response error code: %s", esp_err_to_name(err));
     return err;
   });
 
