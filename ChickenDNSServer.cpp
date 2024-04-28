@@ -1,9 +1,5 @@
 #include <ChickenDNSServer.h>
 #include <LoopScheduler.h>
-
-#if DNS_SERVER_LOG_LEVEL > 0
-#define TAG "DNSServer"
-#endif
 #include <Utilities.h>
 
 extern "C"
@@ -196,7 +192,7 @@ namespace Chicken
 
           if (offset >= getLength())
           {
-            bailout(ESP_ERR_INVALID_ARG, "Invalid offset in domain name: %d, message length: %d", offset, lengthBytes);
+            bailout(ESP_ERR_INVALID_ARG, "Invalid offset in domain name: %d, message length: %d", offset, getLength());
           }
 
           posBytes = offset / 8;
@@ -236,7 +232,7 @@ namespace Chicken
       esp_err_t err = ESP_OK;
       if (getLength() + str->getLength() + 1 > getSize())
       {
-        checkout("Unable to store string of length %d at pos %d (total size: %d)", str->getLength(), lengthBytes, sizeof(message));
+        checkout("Unable to store string of length %d at pos %d (total size: %d)", str->getLength(), getLength(), getSize());
       }
 
       memcpy(d() + getLength(), str->c(), str->getLength() + 1);
