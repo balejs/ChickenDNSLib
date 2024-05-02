@@ -99,7 +99,7 @@ namespace Chicken
     DNSMessage() : FillableBuf() {}
     DNSMessage(DNSMessage *other) : FillableBuf(other) {}
 
-    esp_err_t appendResourceRecord(ChickenStr qName, QType qType, uint16_t qClass, uint16_t rdLength)
+    esp_err_t appendResourceRecord(SStr qName, QType qType, uint16_t qClass, uint16_t rdLength)
     {
       uint16_t anCount = getU16(DNS_HEADER_ANCOUNT);
       // 4.1.3. Resource record format
@@ -163,7 +163,7 @@ namespace Chicken
 #define LABEL_TYPE_STRING (0)
 
     // beginPosition is an inout parameter and is updated with the first pos after the label
-    esp_err_t getLabel(uint16_t *endpointBitsInOut, ChickenStr labelOut)
+    esp_err_t getLabel(uint16_t *endpointBitsInOut, SStr labelOut)
     {
       uint8_t labelType = LABEL_TYPE_UNKNOWN;
 
@@ -227,7 +227,7 @@ namespace Chicken
       _getout return err;
     }
 
-    esp_err_t appendString(ChickenStr str)
+    esp_err_t appendString(SStr str)
     {
       esp_err_t err = ESP_OK;
       if (getLength() + str->getLength() + 1 > getSize())
@@ -240,7 +240,7 @@ namespace Chicken
       _getout return err;
     }
 
-    esp_err_t appendLabel(ChickenStr label)
+    esp_err_t appendLabel(SStr label)
     {
       uint16_t lenPos = getLength(); // the byte at lenPos contains the string length
       uint16_t pos = lenPos + 1;
@@ -277,7 +277,7 @@ namespace Chicken
   };
 }
 
-Chicken::DNSServer::DNSServer(ChickenStr domainName, SLoopScheduler loopScheduler)
+Chicken::DNSServer::DNSServer(SStr domainName, SLoopScheduler loopScheduler)
 {
   _domainName = domainName;
   _loopScheduler = loopScheduler;
@@ -285,7 +285,7 @@ Chicken::DNSServer::DNSServer(ChickenStr domainName, SLoopScheduler loopSchedule
   _serverSocket = Socket::make(loopScheduler);
   SDNSMessage message = MakeDNSMessage();
 
-  auto weakPtr = _weakPtr;
+  auto weakPtr = getWeakPtr();
   _serverSocket->receive([weakPtr](esp_err_t err, SBuf message) -> esp_err_t
   {
     checkout("Error getting DNS message from socket");
@@ -314,7 +314,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
   for (uint16_t i = 0; i < qdCount; i++)
   {
     // 4.1.2 Question section format
-    ChickenStr qName = MakeChickenStr();
+    SStr qName = MakeStr();
     uint16_t qType, qClass;
     (void)qClass; // suppress unused variable warning when building without logs
 
@@ -348,7 +348,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
       checkout("Unable to append query type NS");
 
       // 3.3.11. NS RDATA format
-      ChickenStr nameServer = MakeChickenStr("hi"); // this will use 1 byte for the length + 3 bytes for the string
+      SStr nameServer = MakeStr("hi"); // this will use 1 byte for the length + 3 bytes for the string
       err = reply->appendLabel(nameServer);         // NSDNAME
     }
     break;

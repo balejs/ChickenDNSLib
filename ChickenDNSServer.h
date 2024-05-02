@@ -1,13 +1,12 @@
 #ifndef __CHICKEN_DNS_SERVER_H__
 #define __CHICKEN_DNS_SERVER_H__
 
-#include <ChickenStr.h>
 #include <memory>
 #include <lwip/ip4_addr.h>
+
+#include <Buffering.h>
 #include <ChickenSocket.h>
 #include <LoopScheduler.h>
-#include <Interfaces.h>
-
 
 namespace Chicken {
     class DNSMessage;
@@ -16,10 +15,10 @@ namespace Chicken {
     class DNSServer: public Weakling<DNSServer>
     {
         public:
-            DNSServer(ChickenStr domainName, SLoopScheduler loopScheduler);
+            DNSServer(SStr domainName, SLoopScheduler loopScheduler);
 
         private:
-            ChickenStr _domainName;
+            SStr _domainName;
             bool _running;
 
             SLoopScheduler _loopScheduler;
