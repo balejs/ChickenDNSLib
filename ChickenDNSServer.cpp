@@ -86,7 +86,6 @@ typedef enum
 #define DNS_RESOURCE_RECORD_TTL 32
 #define DNS_RESOURCE_RECORD_RDLENGTH 64
 
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 using namespace Chicken;
 
 #define HEADER_LEN (12)
@@ -99,7 +98,7 @@ namespace Chicken
     DNSMessage() : FillableBuf() {}
     DNSMessage(DNSMessage *other) : FillableBuf(other) {}
 
-    esp_err_t appendResourceRecord(ChickenStr qName, QType qType, uint16_t qClass, uint16_t rdLength)
+    esp_err_t appendResourceRecord(SStr qName, QType qType, uint16_t qClass, uint16_t rdLength)
     {
       uint16_t anCount = getU16(DNS_HEADER_ANCOUNT);
       // 4.1.3. Resource record format
@@ -163,7 +162,7 @@ namespace Chicken
 #define LABEL_TYPE_STRING (0)
 
     // beginPosition is an inout parameter and is updated with the first pos after the label
-    esp_err_t getLabel(uint16_t *endpointBitsInOut, ChickenStr labelOut)
+    esp_err_t getLabel(uint16_t *endpointBitsInOut, SStr labelOut)
     {
       uint8_t labelType = LABEL_TYPE_UNKNOWN;
 
@@ -227,7 +226,7 @@ namespace Chicken
       _getout return err;
     }
 
-    esp_err_t appendString(ChickenStr str)
+    esp_err_t appendString(SStr str)
     {
       esp_err_t err = ESP_OK;
       if (getLength() + str->getLength() + 1 > getSize())
@@ -235,18 +234,18 @@ namespace Chicken
         checkout("Unable to store string of length %d at pos %d (total size: %d)", str->getLength(), getLength(), getSize());
       }
 
-      memcpy(d() + getLength(), str->c(), str->getLength() + 1);
+      memcpy(d() + getLength(), str->data(), str->getLength() + 1);
 
       _getout return err;
     }
 
-    esp_err_t appendLabel(ChickenStr label)
+    esp_err_t appendLabel(SStr label)
     {
       uint16_t lenPos = getLength(); // the byte at lenPos contains the string length
       uint16_t pos = lenPos + 1;
       esp_err_t err = ESP_OK;
 
-      for (char *str = label->c(); *str != '\0' && pos < getSize(); str++, pos++)
+      for (char *str = label->data(); *str != '\0' && pos < getSize(); str++, pos++)
       {
         if (*str == '.')
         {
@@ -269,7 +268,7 @@ namespace Chicken
       else
       {
         ensureLength(getSize());
-        bailout(ESP_ERR_INVALID_ARG, "Label %s falls outside message boundaries", label->c());
+        bailout(ESP_ERR_INVALID_ARG, "Label %s falls outside message boundaries", label->data());
       }
 
       _getout return err;
@@ -277,7 +276,7 @@ namespace Chicken
   };
 }
 
-Chicken::DNSServer::DNSServer(ChickenStr domainName, SLoopScheduler loopScheduler)
+Chicken::DNSServer::DNSServer(SStr domainName, SLoopScheduler loopScheduler)
 {
   _domainName = domainName;
   _loopScheduler = loopScheduler;
@@ -285,11 +284,11 @@ Chicken::DNSServer::DNSServer(ChickenStr domainName, SLoopScheduler loopSchedule
   _serverSocket = Socket::make(loopScheduler);
   SDNSMessage message = MakeDNSMessage();
 
-  auto weakPtr = _weakPtr;
-  _serverSocket->receive([weakPtr](esp_err_t err, SBuf message) -> esp_err_t
+  auto weakRef = getWeakPtr();
+  _serverSocket->receive([weakRef](esp_err_t err, SBuf message) -> esp_err_t
   {
     checkout("Error getting DNS message from socket");
-    err = lockOrDie(weakPtr, err, [message](esp_err_t err, SDNSServer sharedPtr) -> esp_err_t
+    err = lockOrDie(weakRef, err, [message](esp_err_t err, SDNSServer sharedPtr) -> esp_err_t
     {
       return sharedPtr->handleMessage(std::static_pointer_cast<DNSMessage>(message));
     });
@@ -314,7 +313,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
   for (uint16_t i = 0; i < qdCount; i++)
   {
     // 4.1.2 Question section format
-    ChickenStr qName = MakeChickenStr();
+    SStr qName = MakeStr();
     uint16_t qType, qClass;
     (void)qClass; // suppress unused variable warning when building without logs
 
@@ -326,7 +325,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
     qClass = message->getU16(posBits);
     posBits += 16;
 
-    _logi("Question: type 0x%X class 0x%X name: %s\n", qType, qClass, qName->c() == NULL ? "(null)" : qName->c());
+    _logi("Question: type 0x%X class 0x%X name: %s\n", qType, qClass, qName->data() == NULL ? "(null)" : qName->data());
 
     switch (qType)
     {
@@ -348,7 +347,7 @@ esp_err_t Chicken::DNSServer::handleMessage(SDNSMessage message)
       checkout("Unable to append query type NS");
 
       // 3.3.11. NS RDATA format
-      ChickenStr nameServer = MakeChickenStr("hi"); // this will use 1 byte for the length + 3 bytes for the string
+      SStr nameServer = MakeStr("hi"); // this will use 1 byte for the length + 3 bytes for the string
       err = reply->appendLabel(nameServer);         // NSDNAME
     }
     break;
